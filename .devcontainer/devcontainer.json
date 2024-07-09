@@ -1,0 +1,35 @@
+{
+    "name": "Ubuntu",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "capAdd": [
+        "SYS_PTRACE"
+    ],
+    "features": {
+        "ghcr.io/devcontainers/features/python:1": {
+            "installTools": true,
+            "version": "3.10"
+        },
+        "ghcr.io/devcontainers-contrib/features/poetry:2": {
+            "version": "latest"
+        }
+    },
+    "hostRequirements": {
+        "gpu": "optional"
+    },
+    "securityOpt": [
+        "seccomp=unconfined"
+    ],
+    "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "charliermarsh.ruff",
+                "ms-python.python",
+                "ms-python.mypy-type-checker",
+                "ms-toolsai.jupyter"
+            ]
+        }
+    }
+}
