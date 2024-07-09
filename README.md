@@ -25,7 +25,7 @@ See [Tutorial](https://github.com/mobiusml/aana_sdk/blob/main/docs/tutorial.md) 
 ## Project structure
 
 ```
-aana_app_project/
+aana_chat_with_video/
 ├── config/                   | various configs, including settings, deployments and endpoints
 │   ├── endpoints.py          | list of endpoints to deploy
 │   ├── deployments.py        | list of deployments (models) to deploy
@@ -73,7 +73,7 @@ poetry install
 4. Run the app.
 
 ```bash
-aana deploy aana_app_project.app:aana_app
+aana deploy aana_chat_with_video.app:aana_app
 ```
 
 ## Usage
@@ -83,7 +83,7 @@ To use the project, follow these steps:
 1. Run the app as described in the installation section.
 
 ```bash
-aana deploy aana_app_project.app:aana_app
+aana deploy aana_chat_with_video.app:aana_app
 ```
 
 Once the application is running, you will see the message `Deployed successfully.` in the logs. It will also show the URL for the API documentation.

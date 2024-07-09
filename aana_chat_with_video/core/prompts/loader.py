@@ -7,7 +7,7 @@ def get_prompt_template(name: str) -> Template:
     Use this function to load a prompt templates for LLMs:
 
     ```python
-    from aana_app_project.core.prompts.loader import get_prompt_template
+    from aana_chat_with_video.core.prompts.loader import get_prompt_template
 
     template = get_prompt_template("test")
     prompt = template.render(your_variable="your_value")
@@ -20,6 +20,6 @@ def get_prompt_template(name: str) -> Template:
         Template: The prompt template.
     """
     env = Environment(loader=PackageLoader(
-        "aana_app_project", "core", "prompts"))
+        "aana_chat_with_video", "core", "prompts"))
     template = env.get_template(f"{name}.j2")
     return template

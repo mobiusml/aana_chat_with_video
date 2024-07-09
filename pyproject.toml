@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "aana_app_project"
+name = "aana_chat_with_video"
 version = "0.1.0"
-description = "project_description"
-authors = ["author_name"]
+description = ""
+authors = ["mobiusml"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
