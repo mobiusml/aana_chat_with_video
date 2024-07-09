@@ -1,9 +1,9 @@
 from aana.sdk import AanaSDK
 
-from aana_app_project.configs.deployments import deployments
-from aana_app_project.configs.endpoints import endpoints
+from aana_chat_with_video.configs.deployments import deployments
+from aana_chat_with_video.configs.endpoints import endpoints
 
-aana_app = AanaSDK(name="aana_app_project")
+aana_app = AanaSDK(name="aana_chat_with_video")
 
 for deployment in deployments:
     aana_app.register_deployment(**deployment)
