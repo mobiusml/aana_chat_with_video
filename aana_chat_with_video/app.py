@@ -1,5 +1,4 @@
 from aana.sdk import AanaSDK
-
 from aana_chat_with_video.configs.deployments import deployments
 from aana_chat_with_video.configs.endpoints import endpoints
 
