@@ -140,7 +140,7 @@ class IndexVideoEndpoint(Endpoint):
                 yield {
                     "transcription": whisper_output["transcription"],
                     "segments": whisper_output["segments"],
-                    "info": whisper_output["transcription_info"],
+                    "transcription_info": whisper_output["transcription_info"],
                 }
             transcription = sum(transcription_list, AsrTranscription())
             segments = sum(segments_list, AsrSegments())
