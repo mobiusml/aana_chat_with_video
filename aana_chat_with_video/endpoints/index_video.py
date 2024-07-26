@@ -20,15 +20,17 @@ from aana.integrations.external.decord import generate_frames, get_video_duratio
 from aana.integrations.external.yt_dlp import download_video, get_video_metadata
 from aana.processors.remote import run_remote
 from aana.processors.video import extract_audio
-from aana.storage.models.extended_video import VideoProcessingStatus
-from aana.storage.repository.extended_video import ExtendedVideoRepository
-from aana.storage.repository.extended_video_caption import (
+from aana_chat_with_video.configs.settings import settings
+from aana_chat_with_video.storage.models.extended_video import VideoProcessingStatus
+from aana_chat_with_video.storage.repository.extended_video import (
+    ExtendedVideoRepository,
+)
+from aana_chat_with_video.storage.repository.extended_video_caption import (
     ExtendedVideoCaptionRepository,
 )
-from aana.storage.repository.extended_video_transcript import (
+from aana_chat_with_video.storage.repository.extended_video_transcript import (
     ExtendedVideoTranscriptRepository,
 )
-from aana_chat_with_video.configs.settings import settings
 
 if TYPE_CHECKING:
     from aana.core.models.audio import Audio
