@@ -9,16 +9,18 @@ from aana.core.models.chat import Question
 from aana.core.models.media import MediaId
 from aana.core.models.sampling import SamplingParams
 from aana.deployments.aana_deployment_handle import AanaDeploymentHandle
-from aana.exceptions.db import UnfinishedVideoException
-from aana.storage.models.extended_video import VideoProcessingStatus
-from aana.storage.repository.extended_video import ExtendedVideoRepository
-from aana.storage.repository.extended_video_caption import (
+from aana_chat_with_video.configs.settings import settings
+from aana_chat_with_video.exceptions.core import UnfinishedVideoException
+from aana_chat_with_video.storage.models.extended_video import VideoProcessingStatus
+from aana_chat_with_video.storage.repository.extended_video import (
+    ExtendedVideoRepository,
+)
+from aana_chat_with_video.storage.repository.extended_video_caption import (
     ExtendedVideoCaptionRepository,
 )
-from aana.storage.repository.extended_video_transcript import (
+from aana_chat_with_video.storage.repository.extended_video_transcript import (
     ExtendedVideoTranscriptRepository,
 )
-from aana_chat_with_video.configs.settings import settings
 from aana_chat_with_video.utils.core import generate_combined_timeline, generate_dialog
 
 

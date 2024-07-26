@@ -3,7 +3,9 @@ from typing import TypedDict
 from aana.api.api_generation import Endpoint
 from aana.core.models.media import MediaId
 from aana.core.models.video import VideoStatus
-from aana.storage.repository.extended_video import ExtendedVideoRepository
+from aana_chat_with_video.storage.repository.extended_video import (
+    ExtendedVideoRepository,
+)
 
 
 class VideoStatusOutput(TypedDict):
