@@ -80,7 +80,6 @@ def test_chat_with_video(call_endpoint, video, whisper_params):
     call_endpoint(
         VIDEO_DELETE_ENDPOINT,
         {"media_id": media_id},
-        ignore_expected_output=True,
     )
 
     # get video status
@@ -121,7 +120,6 @@ def test_chat_with_video(call_endpoint, video, whisper_params):
     call_endpoint(
         VIDEO_DELETE_ENDPOINT,
         {"media_id": media_id},
-        ignore_expected_output=True,
     )
 
     # after deleting the video, we should not be able to chat with it
@@ -132,6 +130,10 @@ def test_chat_with_video(call_endpoint, video, whisper_params):
     )
 
 
+@pytest.mark.skipif(
+    not is_gpu_available(),
+    reason="GPU is not available",
+)
 @pytest.mark.parametrize(
     "endpoint, data",
     [
