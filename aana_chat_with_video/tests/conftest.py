@@ -8,8 +8,6 @@ from typing import Any
 
 import pytest
 import requests
-from pydantic import ValidationError
-
 from aana.api.api_generation import Endpoint
 from aana.configs.db import DbSettings, SQLiteConfig
 from aana.exceptions.runtime import EmptyMigrationsException
@@ -17,7 +15,8 @@ from aana.sdk import AanaSDK
 from aana.storage.op import DbType
 from aana.storage.session import get_session
 from aana.utils.json import jsonify
-from aana_chat_with_video.configs.settings import settings
+from pydantic import ValidationError
+
 from aana_chat_with_video.storage.op import (
     run_alembic_migrations as run_app_alembic_migrations,
 )
@@ -35,10 +34,13 @@ def db_session():
 
     # Reload the settings to update the database path
     import aana.configs.settings
+
     import aana_chat_with_video.configs.settings
 
     importlib.reload(aana.configs.settings)
     importlib.reload(aana_chat_with_video.configs.settings)
+
+    from aana_chat_with_video.configs.settings import settings
 
     # Run migrations to set up the schema
     try:
