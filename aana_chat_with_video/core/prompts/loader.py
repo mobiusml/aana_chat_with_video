@@ -19,7 +19,8 @@ def get_prompt_template(name: str) -> Template:
     Returns:
         Template: The prompt template.
     """
-    env = Environment(loader=PackageLoader(
-        "aana_chat_with_video", "core", "prompts"))
+    env = Environment(
+        loader=PackageLoader("aana_chat_with_video.core", "prompts"), autoescape=True
+    )
     template = env.get_template(f"{name}.j2")
     return template

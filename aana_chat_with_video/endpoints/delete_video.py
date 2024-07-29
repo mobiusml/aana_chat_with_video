@@ -22,6 +22,6 @@ class DeleteVideoEndpoint(Endpoint):
         self.video_repo = ExtendedVideoRepository(self.session)
 
     async def run(self, media_id: MediaId) -> DeleteVideoOutput:
-        """Delete media."""
+        """Delete video."""
         self.video_repo.delete(media_id)
         return DeleteVideoOutput(media_id=media_id)
