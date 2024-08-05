@@ -1,19 +1,29 @@
 [tool.poetry]
 name = "aana_chat_with_video"
 version = "0.1.0"
-description = ""
-authors = ["mobiusml"]
+description = "A multimodal chat application that allows users to upload a video and ask questions about the video content based on the visual and audio information"
+authors = ["Mobius Labs GmbH <dev@mobiuslabs.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-aana = ">=0.2.0"
-
+aana = { git = "https://github.com/mobiusml/aana_sdk.git", branch = "remove_projects" }
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
 ruff = "^0.1.5"
+pytest-asyncio = "^0.23.6"
+pytest-dotenv = "^0.5.2"
+pytest-env = "^1.1.3"
+pytest-mock = "^3.12.0"
+pytest-timeout = "^2.2.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+timeout = 600
+env = [
+    "TEST_MODE=True"
+]
