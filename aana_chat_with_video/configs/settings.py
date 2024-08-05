@@ -3,11 +3,10 @@ from aana.configs.settings import Settings as AanaSettings
 
 class Settings(AanaSettings):
     """A pydantic model for App settings."""
-    # Add your custom settings here
-    # Then, you can access them in your app like this:
-    # from aana_chat_with_video.configs.settings import settings
-    # settings.custom_property
-    pass
+
+    asr_model_name: str = "whisper_medium"
+    captioning_model_name: str = "hf_blip2_opt_2_7b"
+    max_video_len: int = 60 * 20  # 20 minutes
 
 
 settings = Settings()
