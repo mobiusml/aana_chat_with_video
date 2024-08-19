@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-aana = { git = "https://github.com/mobiusml/aana_sdk.git", branch = "remove_projects" }
+aana = ">=0.2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
