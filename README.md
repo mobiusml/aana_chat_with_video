@@ -44,7 +44,7 @@ Once the application is running, you will see the message `Deployed successfully
 
 > **⚠️ Warning**
 >
-> The applications require 1 largs GPUs to run. GPU should have at least 48GB of memory.
+> The applications require 1 large GPUs to run. GPU should have at least 48GB of memory.
 >
 > The applications will detect the available GPU automatically but you need to make sure that `CUDA_VISIBLE_DEVICES` is set correctly.
 > 
