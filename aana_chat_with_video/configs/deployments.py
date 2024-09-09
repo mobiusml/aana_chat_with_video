@@ -2,7 +2,8 @@ from aana.core.models.sampling import SamplingParams
 from aana.core.models.types import Dtype
 from aana.deployments.hf_blip2_deployment import HFBlip2Config, HFBlip2Deployment
 from aana.deployments.vad_deployment import VadConfig, VadDeployment
-from aana.deployments.vllm_deployment import VLLMConfig, VLLMDeployment
+from aana.deployments.hqq_deployment import HQQConfig, HQQDeployment, BaseQuantizeConfig, HQQBackend
+
 from aana.deployments.whisper_deployment import (
     WhisperComputeType,
     WhisperConfig,
@@ -55,19 +56,19 @@ deployments: list[dict] = [
     },
     {
         "name": "llm_deployment",
-        "instance": VLLMDeployment.options(
+        "instance": HQQDeployment.options(
             num_replicas=1,
             ray_actor_options={"num_gpus": 0.45},
-            user_config=VLLMConfig(
-                model="internlm/internlm2_5-7b-chat",
-                dtype=Dtype.AUTO,
+            user_config=HQQConfig(
+                model_id="mobiuslabsgmbh/Llama-3.1-8b-instruct_4bitgs64_hqq_calib",
+                backend=HQQBackend.BITBLAS,
                 gpu_memory_reserved=30000,
-                max_model_len=50000,
-                enforce_eager=True,
+                dtype=Dtype.FLOAT16,
+                quantize_on_fly=False,
+                quantization_config=BaseQuantizeConfig(nbits=4, group_size=64, quant_scale=False, quant_zero=False, axis=1),
                 default_sampling_params=SamplingParams(
                     temperature=0.0, top_p=1.0, top_k=-1, max_tokens=1024
                 ),
-                engine_args={"trust_remote_code": True},
             ).model_dump(mode="json"),
         ),
     },

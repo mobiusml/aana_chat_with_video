@@ -6,8 +6,9 @@ authors = ["Mobius Labs GmbH <dev@mobiuslabs.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
+aana = { git = "https://github.com/mobiusml/aana_sdk.git", branch = "hqq-deployment" }
 python = "^3.10"
-aana = ">=0.2.2.2"
+bitblas = "^0.0.1.dev15"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
