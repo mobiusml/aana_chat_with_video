@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-aana = ">=0.2.2.2"
+aana = ">=0.2.2.3"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
