@@ -80,105 +80,106 @@ class IndexVideoEndpoint(Endpoint):
         """Transcribe video in chunks."""
         media_id = video.media_id
         with get_session() as session:
-            extended_video_repo = ExtendedVideoRepository(session)
-            transcript_repo = ExtendedVideoTranscriptRepository(session)
-            caption_repo = ExtendedVideoCaptionRepository(session)
-            if extended_video_repo.check_media_exists(media_id):
+            if ExtendedVideoRepository(session).check_media_exists(media_id):
                 raise MediaIdAlreadyExistsException(table_name="media", media_id=video)
+        
+        video_duration = None
+        if video.url is not None:
+            video_metadata = get_video_metadata(video.url)
+            video_duration = video_metadata.duration
 
-            video_duration = None
-            if video.url is not None:
-                video_metadata = get_video_metadata(video.url)
-                video_duration = video_metadata.duration
+        # precheck for max video length before actually download the video if possible
+        if video_duration and video_duration > settings.max_video_len:
+            raise VideoTooLongException(
+                video=video,
+                video_len=video_duration,
+                max_len=settings.max_video_len,
+            )
 
-            # precheck for max video length before actually download the video if possible
-            if video_duration and video_duration > settings.max_video_len:
-                raise VideoTooLongException(
-                    video=video,
-                    video_len=video_duration,
-                    max_len=settings.max_video_len,
-                )
+        video_obj: Video = await run_remote(download_video)(video_input=video)
+        if video_duration is None:
+            video_duration = await run_remote(get_video_duration)(video=video_obj)
 
-            video_obj: Video = await run_remote(download_video)(video_input=video)
-            if video_duration is None:
-                video_duration = await run_remote(get_video_duration)(video=video_obj)
+        if video_duration > settings.max_video_len:
+            raise VideoTooLongException(
+                video=video_obj,
+                video_len=video_duration,
+                max_len=settings.max_video_len,
+            )
 
-            if video_duration > settings.max_video_len:
-                raise VideoTooLongException(
-                    video=video_obj,
-                    video_len=video_duration,
-                    max_len=settings.max_video_len,
-                )
+        with get_session() as session:
+            ExtendedVideoRepository(session).save(video=video_obj, duration=video_duration)
 
-            extended_video_repo.save(video=video_obj, duration=video_duration)
-            yield {
-                "media_id": media_id,
-                "metadata": VideoMetadata(
-                    title=video_obj.title,
-                    description=video_obj.description,
-                    duration=video_duration,
-                ),
-            }
+        yield {
+            "media_id": media_id,
+            "metadata": VideoMetadata(
+                title=video_obj.title,
+                description=video_obj.description,
+                duration=video_duration,
+            ),
+        }
 
-            try:
-                extended_video_repo.update_status(
+        try:
+            with get_session() as session:
+                ExtendedVideoRepository(session).update_status(
                     media_id, VideoProcessingStatus.RUNNING
                 )
-                audio: Audio = extract_audio(video=video_obj)
+            audio: Audio = extract_audio(video=video_obj)
 
-                # TODO: Update once batched whisper PR is merged
-                # vad_output = await self.vad_handle.asr_preprocess_vad(
-                #     audio=audio, params=vad_params
-                # )
-                # vad_segments = vad_output["segments"]
+            # TODO: Update once batched whisper PR is merged
+            # vad_output = await self.vad_handle.asr_preprocess_vad(
+            #     audio=audio, params=vad_params
+            # )
+            # vad_segments = vad_output["segments"]
 
-                transcription_list = []
-                segments_list = []
-                transcription_info_list = []
-                async for whisper_output in self.asr_handle.transcribe_stream(
-                    audio=audio, params=whisper_params
-                ):
-                    transcription_list.append(whisper_output["transcription"])
-                    segments_list.append(whisper_output["segments"])
-                    transcription_info_list.append(whisper_output["transcription_info"])
-                    yield {
-                        "transcription": whisper_output["transcription"],
-                        "segments": whisper_output["segments"],
-                        "transcription_info": whisper_output["transcription_info"],
-                    }
-                transcription = sum(transcription_list, AsrTranscription())
-                segments = sum(segments_list, AsrSegments())
-                transcription_info = sum(transcription_info_list, AsrTranscriptionInfo())
+            transcription_list = []
+            segments_list = []
+            transcription_info_list = []
+            async for whisper_output in self.asr_handle.transcribe_stream(
+                audio=audio, params=whisper_params
+            ):
+                transcription_list.append(whisper_output["transcription"])
+                segments_list.append(whisper_output["segments"])
+                transcription_info_list.append(whisper_output["transcription_info"])
+                yield {
+                    "transcription": whisper_output["transcription"],
+                    "segments": whisper_output["segments"],
+                    "transcription_info": whisper_output["transcription_info"],
+                }
+            transcription = sum(transcription_list, AsrTranscription())
+            segments = sum(segments_list, AsrSegments())
+            transcription_info = sum(transcription_info_list, AsrTranscriptionInfo())
 
-                captions = []
-                timestamps = []
-                frame_ids = []
+            captions = []
+            timestamps = []
+            frame_ids = []
 
-                async for frames_dict in run_remote(generate_frames)(
-                    video=video_obj, params=video_params
-                ):
-                    if len(frames_dict["frames"]) == 0:
-                        break
+            async for frames_dict in run_remote(generate_frames)(
+                video=video_obj, params=video_params
+            ):
+                if len(frames_dict["frames"]) == 0:
+                    break
 
-                    timestamps.extend(frames_dict["timestamps"])
-                    frame_ids.extend(frames_dict["frame_ids"])
-                    chat_prompt = "Describe the content of the following image in a single sentence:"
-                    dialogs = [
-                        ImageChatDialog.from_prompt(prompt=chat_prompt, images=[frame]) for frame in frames_dict["frames"]
-                    ]
+                timestamps.extend(frames_dict["timestamps"])
+                frame_ids.extend(frames_dict["frame_ids"])
+                chat_prompt = "Describe the content of the following image in a single sentence:"
+                dialogs = [
+                    ImageChatDialog.from_prompt(prompt=chat_prompt, images=[frame]) for frame in frames_dict["frames"]
+                ]
 
-                    # Collect the tasks to run concurrently and wait for them to finish
-                    tasks = [self.captioning_handle.chat(dialog) for dialog in dialogs]
-                    captioning_output = await asyncio.gather(*tasks)
-                    captioning_output = [caption["message"].content for caption in captioning_output]
-                    captions.extend(captioning_output)
+                # Collect the tasks to run concurrently and wait for them to finish
+                tasks = [self.captioning_handle.chat(dialog) for dialog in dialogs]
+                captioning_output = await asyncio.gather(*tasks)
+                captioning_output = [caption["message"].content for caption in captioning_output]
+                captions.extend(captioning_output)
 
-                    yield {
-                        "captions": captioning_output,
-                        "timestamps": frames_dict["timestamps"],
-                    }
+                yield {
+                    "captions": captioning_output,
+                    "timestamps": frames_dict["timestamps"],
+                }
 
-                transcription_entity = transcript_repo.save(
+            with get_session() as session:
+                transcription_entity = ExtendedVideoTranscriptRepository(session).save(
                     model_name=settings.asr_model_name,
                     media_id=video_obj.media_id,
                     transcription=transcription,
@@ -186,7 +187,7 @@ class IndexVideoEndpoint(Endpoint):
                     transcription_info=transcription_info,
                 )
 
-                caption_entities = caption_repo.save_all(
+                caption_entities = ExtendedVideoCaptionRepository(session).save_all(
                     model_name=settings.captioning_model_name,
                     media_id=video_obj.media_id,
                     captions=captions,
@@ -198,12 +199,14 @@ class IndexVideoEndpoint(Endpoint):
                     "transcription_id": transcription_entity.id,
                     "caption_ids": [c.id for c in caption_entities],
                 }
-            except BaseException:
-                extended_video_repo.update_status(
+        except BaseException:
+            with get_session() as session:
+                ExtendedVideoRepository(session).update_status(
                     media_id, VideoProcessingStatus.FAILED
                 )
-                raise
-            else:
-                extended_video_repo.update_status(
+            raise
+        else:
+            with get_session() as session:
+                ExtendedVideoRepository(session).update_status(
                     media_id, VideoProcessingStatus.COMPLETED
                 )

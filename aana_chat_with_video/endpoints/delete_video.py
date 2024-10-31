@@ -17,10 +17,6 @@ class DeleteVideoOutput(TypedDict):
 class DeleteVideoEndpoint(Endpoint):
     """Delete video endpoint."""
 
-    async def initialize(self):
-        """Initialize the endpoint."""
-        await super().initialize()
-
     async def run(self, media_id: MediaId) -> DeleteVideoOutput:
         """Delete video."""
         with get_session() as session:

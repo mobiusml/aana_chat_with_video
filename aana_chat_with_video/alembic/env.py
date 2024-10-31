@@ -5,6 +5,9 @@ from sqlalchemy import engine_from_config, pool
 
 from aana.configs.settings import settings
 from aana.storage.models.base import BaseEntity
+# Import all models to be included in the migration
+import aana.storage.models  # noqa: F401
+import aana_chat_with_video.storage.models  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -19,10 +22,6 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-
-# Import all models to be included in the migration
-import aana.storage.models  # noqa: F401
-import aana_chat_with_video.storage.models  # noqa: F401
 
 target_metadata = BaseEntity.metadata
 
