@@ -18,10 +18,6 @@ class LoadVideoMetadataOutput(TypedDict):
 class LoadVideoMetadataEndpoint(Endpoint):
     """Load video metadata endpoint."""
 
-    async def initialize(self):
-        """Initialize the endpoint."""
-        await super().initialize()
-
     async def run(self, media_id: MediaId) -> LoadVideoMetadataOutput:
         """Load video metadata."""
         with get_session() as session:
