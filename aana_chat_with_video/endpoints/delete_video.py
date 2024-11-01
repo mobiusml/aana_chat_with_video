@@ -2,6 +2,7 @@ from typing import TypedDict
 
 from aana.api.api_generation import Endpoint
 from aana.core.models.media import MediaId
+from aana.storage.session import get_session
 from aana_chat_with_video.storage.repository.extended_video import (
     ExtendedVideoRepository,
 )
@@ -16,12 +17,8 @@ class DeleteVideoOutput(TypedDict):
 class DeleteVideoEndpoint(Endpoint):
     """Delete video endpoint."""
 
-    async def initialize(self):
-        """Initialize the endpoint."""
-        await super().initialize()
-        self.video_repo = ExtendedVideoRepository(self.session)
-
     async def run(self, media_id: MediaId) -> DeleteVideoOutput:
         """Delete video."""
-        self.video_repo.delete(media_id)
+        with get_session() as session:
+            ExtendedVideoRepository(session).delete(media_id)
         return DeleteVideoOutput(media_id=media_id)
