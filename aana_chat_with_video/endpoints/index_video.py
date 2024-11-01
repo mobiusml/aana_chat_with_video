@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Annotated, TypedDict
-
+import asyncio
+from aana.storage.session import get_session
 from pydantic import Field
 
 from aana.api.api_generation import Endpoint
@@ -13,6 +14,8 @@ from aana.core.models.media import MediaId
 from aana.core.models.vad import VadParams
 from aana.core.models.video import VideoInput, VideoMetadata, VideoParams
 from aana.core.models.whisper import BatchedWhisperParams
+from aana.core.models.image_chat import ImageChatDialog
+
 from aana.deployments.aana_deployment_handle import AanaDeploymentHandle
 from aana.exceptions.db import MediaIdAlreadyExistsException
 from aana.exceptions.io import VideoTooLongException
@@ -66,9 +69,6 @@ class IndexVideoEndpoint(Endpoint):
         self.captioning_handle = await AanaDeploymentHandle.create(
             "captioning_deployment"
         )
-        self.extended_video_repo = ExtendedVideoRepository(self.session)
-        self.transcript_repo = ExtendedVideoTranscriptRepository(self.session)
-        self.caption_repo = ExtendedVideoCaptionRepository(self.session)
 
     async def run(  # noqa: C901
         self,
@@ -79,9 +79,10 @@ class IndexVideoEndpoint(Endpoint):
     ) -> AsyncGenerator[IndexVideoOutput, None]:
         """Transcribe video in chunks."""
         media_id = video.media_id
-        if self.extended_video_repo.check_media_exists(media_id):
-            raise MediaIdAlreadyExistsException(table_name="media", media_id=video)
-
+        with get_session() as session:
+            if ExtendedVideoRepository(session).check_media_exists(media_id):
+                raise MediaIdAlreadyExistsException(table_name="media", media_id=video)
+        
         video_duration = None
         if video.url is not None:
             video_metadata = get_video_metadata(video.url)
@@ -106,7 +107,9 @@ class IndexVideoEndpoint(Endpoint):
                 max_len=settings.max_video_len,
             )
 
-        self.extended_video_repo.save(video=video_obj, duration=video_duration)
+        with get_session() as session:
+            ExtendedVideoRepository(session).save(video=video_obj, duration=video_duration)
+
         yield {
             "media_id": media_id,
             "metadata": VideoMetadata(
@@ -117,9 +120,10 @@ class IndexVideoEndpoint(Endpoint):
         }
 
         try:
-            self.extended_video_repo.update_status(
-                media_id, VideoProcessingStatus.RUNNING
-            )
+            with get_session() as session:
+                ExtendedVideoRepository(session).update_status(
+                    media_id, VideoProcessingStatus.RUNNING
+                )
             audio: Audio = extract_audio(video=video_obj)
 
             # TODO: Update once batched whisper PR is merged
@@ -158,43 +162,51 @@ class IndexVideoEndpoint(Endpoint):
 
                 timestamps.extend(frames_dict["timestamps"])
                 frame_ids.extend(frames_dict["frame_ids"])
+                chat_prompt = "Describe the content of the following image in a single sentence:"
+                dialogs = [
+                    ImageChatDialog.from_prompt(prompt=chat_prompt, images=[frame]) for frame in frames_dict["frames"]
+                ]
 
-                captioning_output = await self.captioning_handle.generate_batch(
-                    images=frames_dict["frames"]
-                )
-                captions.extend(captioning_output["captions"])
+                # Collect the tasks to run concurrently and wait for them to finish
+                tasks = [self.captioning_handle.chat(dialog) for dialog in dialogs]
+                captioning_output = await asyncio.gather(*tasks)
+                captioning_output = [caption["message"].content for caption in captioning_output]
+                captions.extend(captioning_output)
 
                 yield {
-                    "captions": captioning_output["captions"],
+                    "captions": captioning_output,
                     "timestamps": frames_dict["timestamps"],
                 }
 
-            transcription_entity = self.transcript_repo.save(
-                model_name=settings.asr_model_name,
-                media_id=video_obj.media_id,
-                transcription=transcription,
-                segments=segments,
-                transcription_info=transcription_info,
-            )
+            with get_session() as session:
+                transcription_entity = ExtendedVideoTranscriptRepository(session).save(
+                    model_name=settings.asr_model_name,
+                    media_id=video_obj.media_id,
+                    transcription=transcription,
+                    segments=segments,
+                    transcription_info=transcription_info,
+                )
 
-            caption_entities = self.caption_repo.save_all(
-                model_name=settings.captioning_model_name,
-                media_id=video_obj.media_id,
-                captions=captions,
-                timestamps=timestamps,
-                frame_ids=frame_ids,
-            )
+                caption_entities = ExtendedVideoCaptionRepository(session).save_all(
+                    model_name=settings.captioning_model_name,
+                    media_id=video_obj.media_id,
+                    captions=captions,
+                    timestamps=timestamps,
+                    frame_ids=frame_ids,
+                )
 
-            yield {
-                "transcription_id": transcription_entity.id,
-                "caption_ids": [c.id for c in caption_entities],
-            }
+                yield {
+                    "transcription_id": transcription_entity.id,
+                    "caption_ids": [c.id for c in caption_entities],
+                }
         except BaseException:
-            self.extended_video_repo.update_status(
-                media_id, VideoProcessingStatus.FAILED
-            )
+            with get_session() as session:
+                ExtendedVideoRepository(session).update_status(
+                    media_id, VideoProcessingStatus.FAILED
+                )
             raise
         else:
-            self.extended_video_repo.update_status(
-                media_id, VideoProcessingStatus.COMPLETED
-            )
+            with get_session() as session:
+                ExtendedVideoRepository(session).update_status(
+                    media_id, VideoProcessingStatus.COMPLETED
+                )

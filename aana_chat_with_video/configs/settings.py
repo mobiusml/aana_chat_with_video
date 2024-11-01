@@ -5,7 +5,7 @@ class Settings(AanaSettings):
     """A pydantic model for App settings."""
 
     asr_model_name: str = "whisper_medium"
-    captioning_model_name: str = "hf_blip2_opt_2_7b"
+    captioning_model_name: str = "qwen2-vl-2b-instruct"
     max_video_len: int = 60 * 20  # 20 minutes
 
 

@@ -2,6 +2,7 @@ import json
 from collections.abc import AsyncGenerator
 from typing import Annotated, TypedDict
 
+from aana.storage.session import get_session
 from pydantic import Field
 
 from aana.api.api_generation import Endpoint
@@ -37,32 +38,35 @@ class VideoChatEndpoint(Endpoint):
         """Initialize the endpoint."""
         await super().initialize()
         self.llm_handle = await AanaDeploymentHandle.create("llm_deployment")
-        self.transcript_repo = ExtendedVideoTranscriptRepository(self.session)
-        self.caption_repo = ExtendedVideoCaptionRepository(self.session)
-        self.video_repo = ExtendedVideoRepository(self.session)
+        
 
     async def run(
         self, media_id: MediaId, question: Question, sampling_params: SamplingParams
     ) -> AsyncGenerator[VideoChatEndpointOutput, None]:
         """Run the video chat endpoint."""
-        # check to see if video already processed
-        video_status = self.video_repo.get_status(media_id)
-        if video_status != VideoProcessingStatus.COMPLETED:
-            raise UnfinishedVideoException(
-                media_id=media_id,
-                status=video_status,
-                message=f"The video data is not available, status: {video_status}",
+        with get_session() as session:
+            transcript_repo = ExtendedVideoTranscriptRepository(session)
+            caption_repo = ExtendedVideoCaptionRepository(session)
+            video_repo = ExtendedVideoRepository(session)
+
+            # check to see if video already processed
+            video_status = video_repo.get_status(media_id)
+            if video_status != VideoProcessingStatus.COMPLETED:
+                raise UnfinishedVideoException(
+                    media_id=media_id,
+                    status=video_status,
+                    message=f"The video data is not available, status: {video_status}",
+                )
+
+            video_metadata = video_repo.get_metadata(media_id)
+
+            transcription_output = transcript_repo.get_transcript(
+                model_name=settings.asr_model_name, media_id=media_id
             )
 
-        transcription_output = self.transcript_repo.get_transcript(
-            model_name=settings.asr_model_name, media_id=media_id
-        )
-
-        captions_output = self.caption_repo.get_captions(
-            model_name=settings.captioning_model_name, media_id=media_id
-        )
-
-        video_metadata = self.video_repo.get_metadata(media_id)
+            captions_output = caption_repo.get_captions(
+                model_name=settings.captioning_model_name, media_id=media_id
+            )
 
         timeline_output = generate_combined_timeline(
             transcription_segments=transcription_output["segments"],
