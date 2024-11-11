@@ -43,6 +43,7 @@ deployments: list[dict] = [
         "instance": VLLMDeployment.options(
             num_replicas=1,
             ray_actor_options={"num_gpus": 0.25},
+            max_ongoing_requests=500,
             user_config=VLLMConfig(
                 model="Qwen/Qwen2-VL-2B-Instruct",
                 dtype=Dtype.AUTO,

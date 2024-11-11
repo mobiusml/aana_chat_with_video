@@ -162,7 +162,7 @@ class IndexVideoEndpoint(Endpoint):
 
                 timestamps.extend(frames_dict["timestamps"])
                 frame_ids.extend(frames_dict["frame_ids"])
-                chat_prompt = "Describe the content of the following image in a single sentence:"
+                chat_prompt = "Caption the content of the following image in a single and concise sentence"
                 dialogs = [
                     ImageChatDialog.from_prompt(prompt=chat_prompt, images=[frame]) for frame in frames_dict["frames"]
                 ]
