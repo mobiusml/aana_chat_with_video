@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-aana = {git = "https://github.com/mobiusml/aana_sdk.git", rev = "91de5b5"}
+aana = {git = "https://github.com/mobiusml/aana_sdk.git", rev = "62a5ee6"}
 vllm = "0.6.3.post1"
 
 [tool.poetry.group.dev.dependencies]
