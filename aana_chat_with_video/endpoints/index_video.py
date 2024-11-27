@@ -168,8 +168,10 @@ class IndexVideoEndpoint(Endpoint):
                 ]
 
                 # Collect the tasks to run concurrently and wait for them to finish
-                tasks = [self.captioning_handle.chat(dialog) for dialog in dialogs]
-                captioning_output = await asyncio.gather(*tasks)
+                captioning_tasks = [
+                    asyncio.create_task(self.captioning_handle.chat(dialog)) for dialog in dialogs 
+                ]
+                captioning_output = await asyncio.gather(*captioning_tasks)
                 captioning_output = [caption["message"].content for caption in captioning_output]
                 captions.extend(captioning_output)
 
