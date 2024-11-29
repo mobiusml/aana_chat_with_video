@@ -18,7 +18,7 @@ env:
 
 commands:
   - apt-get update
-  - apt-get install -y libgl1 libglib2.0-0 ffmpeg python3 python3-dev git nvtop htop sqlite3
+  - apt-get install -y libgl1 libglib2.0-0 ffmpeg python3 python3-dev git nvtop htop sqlite3 cron
   - curl -sSL https://install.python-poetry.org | python3 -
   - export PATH=$PATH:/root/.local/bin
   - sh install.sh
