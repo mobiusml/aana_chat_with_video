@@ -24,6 +24,9 @@ commands:
   - sh install.sh
   - mkdir -p /demo_data
   - mkdir -p /demo_data/hf_cache
+  - (crontab -l 2>/dev/null; echo "0 3 * * * rm -f $TMP_DATA_DIR/videos/*") | sort -u | crontab -
+  - (crontab -l 2>/dev/null; echo "0 3 * * * rm -f $TMP_DATA_DIR/audios/*") | sort -u | crontab -
+  - (crontab -l 2>/dev/null; echo "0 3 * * * rm -f $TMP_DATA_DIR/images/*") | sort -u | crontab -
   - HF_HUB_CACHE="/demo_data/hf_cache" CUDA_VISIBLE_DEVICES="0" poetry run aana deploy aana_chat_with_video.app:aana_app
 
 port: 8000
