@@ -8,9 +8,13 @@ env:
   - NUM_WORKERS=5
   - TASK_QUEUE__EXECUTION_TIMEOUT=10000
   - TASK_QUEUE__NUM_WORKERS=5
-  - TMP_DATA_DIR="/demo_data/aana"
+  - TMP_DATA_DIR=/demo_data/aana
+  - IMAGE_DIR=/demo_data/aana/images
+  - VIDEO_DIR=/demo_data/aana/videos
+  - AUDIO_DIR=/demo_data/aana/audios
+  - MODEL_DIR=/demo_data/aana/models
   - DB_CONFIG__DATASTORE_TYPE=sqlite
-  - DB_CONFIG__DATASTORE_CONFIG__PATH="/demo_data/aana.db"
+  - DB_CONFIG__DATASTORE_CONFIG__PATH=/demo_data/aana.db
 
 commands:
   - apt-get update
