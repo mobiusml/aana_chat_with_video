@@ -162,13 +162,19 @@ class IndexVideoEndpoint(Endpoint):
 
                 timestamps.extend(frames_dict["timestamps"])
                 frame_ids.extend(frames_dict["frame_ids"])
-                captioning_output = await self.captioning_handle.generate_batch(
-                    images=frames_dict["frames"]
-                )
-                captions.extend(captioning_output["captions"])
+                chat_prompt = "Describe the content of the following image in a single sentence:"
+                dialogs = [
+                    ImageChatDialog.from_prompt(prompt=chat_prompt, images=[frame]) for frame in frames_dict["frames"]
+                ]
+
+                # Collect the tasks to run concurrently and wait for them to finish
+                tasks = [self.captioning_handle.chat(dialog) for dialog in dialogs]
+                captioning_output = await asyncio.gather(*tasks)
+                captioning_output = [caption["message"].content for caption in captioning_output]
+                captions.extend(captioning_output)
 
                 yield {
-                    "captions": captioning_output["captions"],
+                    "captions": captioning_output,
                     "timestamps": frames_dict["timestamps"],
                 }
 
