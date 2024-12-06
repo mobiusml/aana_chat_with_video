@@ -9,7 +9,7 @@ readme = "README.md"
 python = "^3.10"
 aana = "0.2.3"
 vllm = "0.6.3.post1"
-transformers = {git = "https://github.com/huggingface/transformers.git", rev = "0b5b5e6"}
+transformers = "^v4.47.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
